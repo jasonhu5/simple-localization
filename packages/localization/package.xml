@@ -1,0 +1,13 @@
+<package>
+  <name>localization</name>
+  <version>0.1.0</version>
+  <description>
+  This package is the simple localization module.
+  </description>
+  <maintainer email="shhu@student.ethz.ch">Shengjie Hu</maintainer>
+  <license>None</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <!-- <build_depend>message_generation</build_depend>
+  <run_depend>message_runtime</run_depend> -->
+</package>
