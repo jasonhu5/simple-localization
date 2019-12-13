@@ -1,0 +1,6 @@
+Any line of text with out numbers can be comments.
+The format of mapping is [tag_id]:[autobot_number].
+Note that there's no space before or after ":".
+
+426:27
+425:26

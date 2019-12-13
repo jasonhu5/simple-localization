@@ -15,8 +15,28 @@ from sensor_msgs.msg import CompressedImage
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Vector3, Quaternion
 import numpy as np
-# from simple_map import SimpleMap
+from simple_map import SimpleMap
 
+class TowerOffset():
+    def __init__(self):
+        self.counter = 0 
+        self.candidate = (0.0, 0.0, 0.0)
+        self.value = (0.0, 0.0, 0.0)
+        self.last_good = self.candidate
+
+    def update(self, offset, counter_thres):
+        # update counter if candidate got another vote
+        self.counter += offset == self.candidate
+        if self.counter > counter_thres:
+            self.counter = 0
+            self.last_good = self.candidate
+        # discard old candidate
+        if offset != self.candidate:
+            self.candidate = offset
+            self.counter = 0
+
+    def useIfGood(self):
+        self.value = self.last_good
 
 class LocalizationNode(DTROS):
 
@@ -27,9 +47,14 @@ class LocalizationNode(DTROS):
 
         # List of current watchtowers 
         self.tower_list = dict()
+        self.tower_offset = dict()
+        self.tower_offset_measuring_set = set([])
 
         ## parameters
         self.parameters['~tag_ttl'] = None
+        self.parameters['~offset_delay_counter_thres'] = None
+        self.parameters['~measuring_offset'] = None
+        self.parameters['~debug_print_offset'] = None
         self.updateParameters()
 
         # Subscribe to topics online localization
@@ -52,13 +77,35 @@ class LocalizationNode(DTROS):
         )
 
         # build simpleMap
-        # map_file_path = os.path.join(
-        #     "/code/catkin_ws/src",
-        #     "simple-localization/packages/localization/src",
-        #     "test_map.yaml"
-        # )
-        # self.map = SimpleMap(map_file_path)
-        # self.map.display_raw_debug()
+        map_file_path = os.path.join(
+            "/code/catkin_ws/src",
+            "simple-localization/packages/localization/src",
+            "test_map.yaml"
+        )
+        self.map = SimpleMap(map_file_path)
+        self.map.display_raw_debug()
+
+        # tag <=> bot
+        tag_bot_mapping_file = os.path.join(
+            "/code/catkin_ws/src",
+            "simple-localization/packages/localization/src",
+            "bot_tag_mapping"
+        )
+        self.tag2bot = self.read_bot_tag_mapping(tag_bot_mapping_file)
+
+        # ugly code
+        self.bot26_loc = None 
+        self.bot26_simple_loc = None 
+
+
+    def read_bot_tag_mapping(self, file_path):
+        with open(file_path) as f:
+            lines = f.read().split("\n")
+            data = [l.split(':') for l in lines if any(char.isdigit() for char in l)]
+            mapping = {}
+            for d in data:
+                mapping[int(d[0])] = int(d[1])
+            return mapping
 
 
     # rotate vector v1 by quaternion q1 
@@ -138,9 +185,15 @@ class LocalizationNode(DTROS):
         """
         frame_id = int(msg.header.frame_id[-3:])
 
-        # TODO: add other bots
-        # testing, autobot27
-        if msg.tag_id == 426:
+        idx = self.tag2bot.get(msg.tag_id)
+
+        if idx:
+
+            # if tower see's a bot in measuring mode, note down
+            if idx == 26:
+                if self.parameters['~measuring_offset']:
+                    self.tower_offset_measuring_set.add(int(frame_id))
+
             # don't use too old data
             tag_time_since_created = rospy.Time.now().to_sec() - msg.header.stamp.secs
             # print(tag_time_since_created, self.parameters['~tag_ttl'])
@@ -176,21 +229,48 @@ class LocalizationNode(DTROS):
 
             x = tf_pos[0] + ref_pos.x
             y = -tf_pos[1] + ref_pos.y
+
+            x -= self.tower_offset[frame_id].value[0]
+            y -= self.tower_offset[frame_id].value[1]
             
             # print("tag [{}]: \n\tx: {}\n\ty: {}\n\tq: {}".format(
-            #     msg.tag_id,
+            #     idx,
             #     pos.x,
             #     pos.y,
             #     # self.quat2angle(rot)
             #     rot
             # ))
-            # onRoad = self.map.position_on_map((x, y), True)
+            onRoad = self.map.position_on_map((x, y), True)
+            if (idx == 26):
+                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", onRoad)
+                self.bot26_simple_loc = (x, y, self.quat2angle(rot))
+                self.diff_simple_vs_loc()
+
             self.pub_marker.publish(self.prep_marker(
-                "duckiebot", x, y, rot, msg.tag_id))
+                "duckiebot", x, y, rot, idx))
             bot_loc = Float64MultiArray()
-            bot_loc.data = [float(msg.tag_id), x, y, self.quat2angle(rot)]
+            bot_loc.data = [float(idx), x, y, self.quat2angle(rot)]
             self.pub_bot_loc.publish(bot_loc)
 
+
+    def diff_simple_vs_loc(self):
+        if (not self.bot26_loc or not self.bot26_simple_loc):
+            return
+        # print("[S] {}".format(self.bot26_simple_loc))
+        # print("[L] {}".format(self.bot26_loc))
+        offset = self.offset_simple_vs_loc()
+        if self.parameters['~debug_print_offset']:
+            print("[Diff] \nx: {}\ny: {}\nz: {}".format(
+                offset[0], offset[1], offset[2]))
+    
+    def offset_simple_vs_loc(self):
+        if (not self.bot26_loc or not self.bot26_simple_loc):
+            return None
+        return (
+            self.bot26_simple_loc[0] - self.bot26_loc[0],
+            self.bot26_simple_loc[1] - self.bot26_loc[1],
+            self.bot26_simple_loc[2] - self.bot26_loc[2],
+        )
 
     def quat2angle(self, q):
         siny_cosp = 2 * (q.w*q.z + q.x*q.y)
@@ -205,29 +285,43 @@ class LocalizationNode(DTROS):
 
         for m in msg.markers:
             # care only about duckiebots
-            if m.ns != "watchtowers":
-                continue
-
-            idx = m.id
-            if not idx in self.tower_list:
+            if m.ns == "watchtowers":
+                idx = m.id
+                if not idx in self.tower_offset:
+                    self.tower_offset[idx] = TowerOffset()
+                
                 self.tower_list[idx] = m
                 p = m.pose.position
                 r = m.pose.orientation
-                print(
-                    "TOWER[{}] \n\tx: {}\n\ty: {}\n\tz: {}\n\tangle: {}".format(
-                        idx, p.x, p.y, p.z, r # self.quat2angle(r)
-                    )
-                )
+                # print(
+                #     "TOWER[{}] \n\tx: {}\n\ty: {}\n\tz: {}\n\tangle: {}".format(
+                #         idx, p.x, p.y, p.z, r # self.quat2angle(r)
+                #     )
+                # )
                 self.pub_marker.publish(self.prep_marker(
                     "watchtower", p.x, p.y, r, idx
                 ))
-            # else:
-            #     self.tower_list[idx] = m
-            #     p = m.pose.position
-            #     r = m.pose.orientation
-            #     self.pub_marker.publish(self.prep_marker(
-            #         "watchtower", p.x, p.y, r, idx
-            #     ))
+
+            if m.ns == "duckiebots":
+                idx = m.id
+                if idx == 26:
+                    self.bot26_loc = (
+                        m.pose.position.x,
+                        m.pose.position.y,
+                        self.quat2angle(m.pose.orientation)
+                    )
+                    self.diff_simple_vs_loc()
+
+            if self.parameters['~measuring_offset']:
+                for tower in self.tower_offset_measuring_set:
+                    self.tower_offset[tower].update(
+                        self.offset_simple_vs_loc(),
+                        self.parameters['~offset_delay_counter_thres'],
+                    )
+            else:
+                for tower in self.tower_offset_measuring_set:
+                    self.tower_offset[tower].useIfGood()
+                self.tower_offset_measuring_set = set([])
 
 
 if __name__ == '__main__':
