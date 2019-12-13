@@ -9,9 +9,19 @@ dts devel build -f --arch amd64
 
 ### How to run:
 Make sure online localization is already running properly.
+* Start the container
 ```
 docker run --name localization --network=host -it --rm duckietown/simple-localization:v1-amd64
 ```
+* [Optional but recommended] Offset measurement for watchtowers.
+    1. Enter a dt-ros-commons container: `docker run -it --rm --net host duckietown/dt-ros-commons:daffy-amd64 /bin/bash` 
+    2. Place autobot26 near the watchtower that you want to do the measurement for.
+    3. Trigger the measurement: `rosparam set /simple_localization/loc_node/measuring_offset true`
+    4. Move the bot a bit so the watchtower sees it, and then leave the bot still.
+    5. When the diff values printed from the program container are stable, turn off measurement: `rosparam set /simple_localization/loc_node/measuring_offset false`
+    6. Verify by moving the bot a bit, check that the diff values are much closer to 0.
+    7. Move the bot to other watchtower(s) and repeat steps 2-4. Multiple watchtowers can be corrected at one time, but use visualization to verify.
+ 
 
 ### Node I/O:
 ![alt text](https://raw.githubusercontent.com/jasonhu5/simple-localization/v1/figures/rqt_graph.png?token=ACTBVS4TTLVHI5VIIXCCPHS57KUPQ)

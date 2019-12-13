@@ -3,7 +3,7 @@
         <node pkg="localization" type="localization_node.py" name="loc_node" output="screen">
           <!-- <param name="~trigger_rescue" type="bool" value="false"/> -->
           <param name="~tag_ttl" type="double" value="2.0"/>
-          <param name="~offset_delay_counter_thres" type="int" value="10"/>
+          <param name="~offset_delay_counter_thres" type="int" value="2"/>
           <param name="~measuring_offset" type="bool" value="false"/>
           <param name="~debug_print_offset" type="bool" value="true"/>
         </node>
