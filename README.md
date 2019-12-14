@@ -21,13 +21,14 @@ ___NOTICE___: Only offset measured watchtowers contribute to publishing fast loc
     * (Optional step) Tell the program which autobot is used for measurements by: `rosparam set /simple_localization/loc_node/offset_bot_id [AUTOBOT_ID]`. Otherwise, it's autobot26 by default.
     2. Enter measurement mode with: `rosparam set /simple_localization/loc_node/measuring_offset true`
     3. Choose the watchtower to do measurement for: `rosparam set /simple_localization/loc_node/offset_tower_id [WATCHTOWER_ID]`
-        * After above step, the watchtower in RVIZ appears as: 
+        * After above step, the watchtower in RVIZ appears as: ![alt text](https://raw.githubusercontent.com/jasonhu5/simple-localization/v1/figures/watchtower_offset_being_measured.png?token=ACTBVS4USGSZCMTHMQYNIKK572TRA)
     4. Place autobot near the watchtower that you want to do the measurement for, and move the bot a bit so the watchtower sees it. And then leave the bot still.
     5. Check the diff values printed from the program container are nearly zero, commit the measurement by either: 
         * Exiting measurement mode: `rosparam set /simple_localization/loc_node/measuring_offset false`, or
         * switch to another watchtower for measurement: `rosparam set /simple_localization/loc_node/offset_tower_id [ANOTHER_WATCHTOWER_ID]`
-    6. After commiting the measurement, the watchtower(s) that have been measured will appear like:
-    7. Choose other watchtower(s) and repeat steps 3-5.
+        * After commiting the measurement, the watchtower(s) that have been measured will appear like: ![alt text](https://raw.githubusercontent.com/jasonhu5/simple-localization/v1/figures/watchtower_offset_compensated.png?token=ACTBVSYJWYB257OANQNIOXK572TRK)
+    6. Choose other watchtower(s) and repeat steps 3-5.
+    * Watchtower numbers in AMoD lab can be referred to here: ![alt text](https://raw.githubusercontent.com/jasonhu5/simple-localization/v1/figures/watchtowers_map.png?token=ACTBVS3JOZPTQPG5A6K2ZK2572TRW)
  
 
 ### Node I/O:
