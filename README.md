@@ -13,14 +13,21 @@ Make sure online localization is already running properly.
 ```
 docker run --name localization --network=host -it --rm duckietown/simple-localization:v1-amd64
 ```
-* [Optional but recommended] Offset measurement for watchtowers.
+
+___NOTICE___: Only offset measured watchtowers contribute to publishing fast localization results.
+
+* [Required] Offset measurement for watchtowers.
     1. Enter a dt-ros-commons container: `docker run -it --rm --net host duckietown/dt-ros-commons:daffy-amd64 /bin/bash` 
-    2. Place autobot26 near the watchtower that you want to do the measurement for.
-    3. Trigger the measurement: `rosparam set /simple_localization/loc_node/measuring_offset true`
-    4. Move the bot a bit so the watchtower sees it, and then leave the bot still.
-    5. When the diff values printed from the program container are stable, turn off measurement: `rosparam set /simple_localization/loc_node/measuring_offset false`
-    6. Verify by moving the bot a bit, check that the diff values are much closer to 0.
-    7. Move the bot to other watchtower(s) and repeat steps 2-4. Multiple watchtowers can be corrected at one time, but use visualization to verify.
+    * (Optional step) Tell the program which autobot is used for measurements by: `rosparam set /simple_localization/loc_node/offset_bot_id [AUTOBOT_ID]`. Otherwise, it's autobot26 by default.
+    2. Enter measurement mode with: `rosparam set /simple_localization/loc_node/measuring_offset true`
+    3. Choose the watchtower to do measurement for: `rosparam set /simple_localization/loc_node/offset_tower_id [WATCHTOWER_ID]`
+        * After above step, the watchtower in RVIZ appears as: 
+    4. Place autobot near the watchtower that you want to do the measurement for, and move the bot a bit so the watchtower sees it. And then leave the bot still.
+    5. Check the diff values printed from the program container are nearly zero, commit the measurement by either: 
+        * Exiting measurement mode: `rosparam set /simple_localization/loc_node/measuring_offset false`, or
+        * switch to another watchtower for measurement: `rosparam set /simple_localization/loc_node/offset_tower_id [ANOTHER_WATCHTOWER_ID]`
+    6. After commiting the measurement, the watchtower(s) that have been measured will appear like:
+    7. Choose other watchtower(s) and repeat steps 3-5.
  
 
 ### Node I/O:
@@ -34,14 +41,16 @@ docker run --name localization --network=host -it --rm duckietown/simple-localiz
     layout:
     dim: []
     data_offset: 0
-    data: [426.0, 2.930640010309501, 3.183142511143741, 24.491974855898427]
+    data: [26.0, 2.8390284122793625, 3.050242414056867, -50.08818199367434, 1576363992.0, 919081926.0]
     ---
     ```
     * data[0]: bot_tag_number
     * data[1]: x
     * data[2]: y
     * data[3]: rotation angle
+    * data[4]: timestamp seconds
+    * data[5]: timestamp nanoseconds
 
 ### How to visualize results:
 
-On server desktop, open terminal, type `rviz`. In rviz window, add by topic, the `/simple_loc` Markers.
+In online localization rviz window, add by topic, the `/simple_loc` Markers.
