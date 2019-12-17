@@ -241,7 +241,8 @@ class SimpleMap():
         if i*j >= 0 and i < self.map_bin.shape[0] and j < self.map_bin.shape[1]:
             return True
         else:
-            print("Position not on map"); return False
+            # print("Position not on map");
+            return False
 
 
 
