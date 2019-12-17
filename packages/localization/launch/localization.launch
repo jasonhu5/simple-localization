@@ -1,16 +1,11 @@
 <launch>
     <group ns="simple_localization">
         <node pkg="localization" type="localization_node.py" name="loc_node" output="screen">
-          <!-- <param name="~trigger_rescue" type="bool" value="false"/> -->
           <param name="~tag_ttl" type="double" value="2.0"/>
-          <param name="~offset_delay_counter_thres" type="int" value="2"/>
           <param name="~measuring_offset" type="bool" value="false"/>
           <param name="~offset_debug_print" type="bool" value="true"/>
           <param name="~offset_tower_id" type="int" value="-1"/>
-          <!-- <param name="~offset_debug_check_tower" type="int" value="100"/> -->
           <param name="~offset_bot_id" type="int" value="26"/>
-          <!-- <param name="~measure_exclude_tower" type="int" value="-1"/> -->
-          <param name="~onroad_debug_print" type="bool" value="false"/>
         </node>
     </group>
 </launch>
