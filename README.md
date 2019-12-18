@@ -55,3 +55,4 @@ ___NOTICE___: Only offset measured watchtowers contribute to publishing fast loc
 ### How to visualize results:
 
 In online localization rviz window, add by topic, the `/simple_loc` Markers.
+
