@@ -24,7 +24,7 @@ Make sure online localization system is already running properly.
 docker run --name localization --network=host -it --rm duckietown/simple-localization:v1-amd64
 ```
 
-#### [Also Required] [Offset measurement](#offset-measure) for watchtowers.
+#### [Also Required] Offset measurement for watchtowers.
 * ___NOTICE___: Only offset measured watchtowers contribute to publishing fast localization results.
     1. Enter a dt-ros-commons container: `docker run -it --rm --net host duckietown/dt-ros-commons:daffy-amd64 /bin/bash` 
         * (Optional step) Tell the program which autobot is used for measurements by: `rosparam set /simple_localization/loc_node/offset_bot_id [AUTOBOT_ID]`. Otherwise, it's autobot26 by default.
