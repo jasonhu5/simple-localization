@@ -12,6 +12,8 @@ Assuming the watchtowers are not moving, experiments show that a fixed offset is
 
 ## Commands to build and run
 
+In `packages/localization/src` directory, modify the file `bot_tag_mapping` by adding the (Autobot tag ID):(Autobot number) in the file. This files is responsible for mapping a recognized AprilTag to an Autobot, so make sure the demo Autobots are added.
+
 ### How to build:
 ```
 dts devel build -f --arch amd64
