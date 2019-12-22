@@ -19,13 +19,13 @@ dts devel build -f --arch amd64
 
 ### How to run:
 Make sure online localization system is already running properly.
-* Start the container
+#### Start the container
 ```
 docker run --name localization --network=host -it --rm duckietown/simple-localization:v1-amd64
 ```
 
-* [Also Required] Offset measurement for watchtowers.
-___NOTICE___: Only offset measured watchtowers contribute to publishing fast localization results.
+#### [Also Required] [Offset measurement](#offset-measure) for watchtowers.
+* ___NOTICE___: Only offset measured watchtowers contribute to publishing fast localization results.
     1. Enter a dt-ros-commons container: `docker run -it --rm --net host duckietown/dt-ros-commons:daffy-amd64 /bin/bash` 
         * (Optional step) Tell the program which autobot is used for measurements by: `rosparam set /simple_localization/loc_node/offset_bot_id [AUTOBOT_ID]`. Otherwise, it's autobot26 by default.
     2. Enter measurement mode with: `rosparam set /simple_localization/loc_node/measuring_offset true`
@@ -37,7 +37,7 @@ ___NOTICE___: Only offset measured watchtowers contribute to publishing fast loc
         * switch to another watchtower for measurement: `rosparam set /simple_localization/loc_node/offset_tower_id [ANOTHER_WATCHTOWER_ID]`
         * After commiting the measurement, the watchtower(s) that have been measured will appear like:<br>![alt text](https://raw.githubusercontent.com/jasonhu5/simple-localization/v1/figures/watchtower_offset_compensated.png?token=ACTBVSYJWYB257OANQNIOXK572TRK)
     6. Choose other watchtower(s) and repeat steps 3-5.
-    * For reference, watchtower numbers in ETHZ AMoD lab can be referred to here: ![alt text](https://raw.githubusercontent.com/jasonhu5/simple-localization/v1/figures/watchtowers_map.png?token=ACTBVS3JOZPTQPG5A6K2ZK2572TRW)
+        * For reference, watchtower numbers in ETHZ AMoD lab can be referred to here: ![alt text](https://raw.githubusercontent.com/jasonhu5/simple-localization/v1/figures/watchtowers_map.png?token=ACTBVS3JOZPTQPG5A6K2ZK2572TRW)
  
 
 ## Node I/O:
